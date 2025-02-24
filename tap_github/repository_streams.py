@@ -1084,7 +1084,8 @@ class CommitsStream(GitHubRestStream):
             "org": context["org"] if context else None,
             "repo": context["repo"] if context else None,
             "repo_id": context["repo_id"] if context else None,
-            "commit_id": record["sha"]
+            "commit_id": record["sha"],
+            "updated_at": context["commit"]["committer"]["date"] if context else None,
         }
 
     schema = th.PropertiesList(
@@ -1175,6 +1176,7 @@ class CommitDiffsStream(GitHubRestStream):
     primary_keys: ClassVar[list[str]] = ["commit_id"]
     parent_stream_type = CommitsStream
     ignore_parent_replication_key = False
+    replication_key = "updated_at"
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
 
     @property
@@ -1223,6 +1225,7 @@ class CommitDiffsStream(GitHubRestStream):
             row["repo"] = context["repo"]
             row["repo_id"] = context["repo_id"]
             row["commit_id"] = context["commit_id"]
+            row["updated_at"] = context["updated_at"]
         return row
 
     schema = th.PropertiesList(
@@ -1231,11 +1234,11 @@ class CommitDiffsStream(GitHubRestStream):
         th.Property("repo", th.StringType),
         th.Property("repo_id", th.IntegerType),
         th.Property("commit_id", th.StringType),
+        th.Property("updated_at", th.DateTimeType),
         # Rest
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
         th.Property("error_message", th.StringType),
-        th.Property("updated_at", th.DateTimeType),
     ).to_dict()
 
 class LabelsStream(GitHubRestStream):
@@ -1325,6 +1328,7 @@ class PullRequestsStream(GitHubRestStream):
                 "repo_id": context["repo_id"],
                 "pull_number": record["number"],
                 "pull_id": record["id"],
+                "updated_at": record["updated_at"],
             }
         return {
             "pull_number": record["number"],
@@ -1445,6 +1449,7 @@ class PullRequestCommitsStream(GitHubRestStream):
             "repo_id": context["repo_id"] if context else None,
             "pull_number": context["pull_number"] if context else None,
             "commit_id": record["sha"],
+            "updated_at": context["commit"]["committer"]["date"] if context else None,
         }
 
     schema = th.PropertiesList(
@@ -1586,6 +1591,7 @@ class PullRequestDiffsStream(GitHubRestStream):
             row["repo_id"] = context["repo_id"]
             row["pull_number"] = context["pull_number"]
             row["pull_id"] = context["pull_id"]
+            row["updated_at"] = context["updated_at"]
         return row
 
     schema = th.PropertiesList(
@@ -1595,11 +1601,11 @@ class PullRequestDiffsStream(GitHubRestStream):
         th.Property("repo_id", th.IntegerType),
         th.Property("pull_number", th.IntegerType),
         th.Property("pull_id", th.IntegerType),
+        th.Property("updated_at", th.DateTimeType),
         # Rest
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
         th.Property("error_message", th.StringType),
-        th.Property("updated_at", th.DateTimeType),
     ).to_dict()
 
 class PullRequestCommitDiffsStream(GitHubRestStream):
@@ -1658,6 +1664,7 @@ class PullRequestCommitDiffsStream(GitHubRestStream):
             row["repo_id"] = context["repo_id"]
             row["pull_number"] = context["pull_number"]
             row["commit_id"] = context["commit_id"]
+            row["updated_at"] = context["updated_at"]
         return row
 
     schema = th.PropertiesList(
@@ -1667,11 +1674,11 @@ class PullRequestCommitDiffsStream(GitHubRestStream):
         th.Property("repo_id", th.IntegerType),
         th.Property("pull_number", th.IntegerType),
         th.Property("commit_id", th.StringType),
+        th.Property("updated_at", th.DateTimeType),
         # Rest
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
         th.Property("error_message", th.StringType),
-        th.Property("updated_at", th.DateTimeType),
     ).to_dict()
 
 class ReviewsStream(GitHubRestStream):
