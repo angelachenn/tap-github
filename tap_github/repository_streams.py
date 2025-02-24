@@ -1085,7 +1085,7 @@ class CommitsStream(GitHubRestStream):
             "repo": context["repo"] if context else None,
             "repo_id": context["repo_id"] if context else None,
             "commit_id": record["sha"],
-            "updated_at": context["commit"]["committer"]["date"] if context else None,
+            "commit_timestamp": context["commit_timestamp"] if context else None,
         }
 
     schema = th.PropertiesList(
@@ -1176,7 +1176,6 @@ class CommitDiffsStream(GitHubRestStream):
     primary_keys: ClassVar[list[str]] = ["commit_id"]
     parent_stream_type = CommitsStream
     ignore_parent_replication_key = False
-    replication_key = "updated_at"
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
 
     @property
@@ -1225,7 +1224,7 @@ class CommitDiffsStream(GitHubRestStream):
             row["repo"] = context["repo"]
             row["repo_id"] = context["repo_id"]
             row["commit_id"] = context["commit_id"]
-            row["updated_at"] = context["updated_at"]
+            row["commit_timestamp"] = context["commit_timestamp"]
         return row
 
     schema = th.PropertiesList(
@@ -1438,6 +1437,7 @@ class PullRequestCommitsStream(GitHubRestStream):
     name = "pull_request_commits"
     path = "/repos/{org}/{repo}/pulls/{pull_number}/commits"
     ignore_parent_replication_key = False
+    replication_key = "updated_at"
     primary_keys: ClassVar[list[str]] = ["node_id"]
     parent_stream_type = PullRequestsStream
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
@@ -1449,7 +1449,7 @@ class PullRequestCommitsStream(GitHubRestStream):
             "repo_id": context["repo_id"] if context else None,
             "pull_number": context["pull_number"] if context else None,
             "commit_id": record["sha"],
-            "updated_at": context["commit"]["committer"]["date"] if context else None,
+            "updated_at": context["updated_at"] if context else None,
         }
 
     schema = th.PropertiesList(
@@ -1458,6 +1458,7 @@ class PullRequestCommitsStream(GitHubRestStream):
         th.Property("repo", th.StringType),
         th.Property("repo_id", th.IntegerType),
         th.Property("pull_number", th.IntegerType),
+        th.Property("updated_at", th.DateTimeType),
         # Rest
         th.Property("url", th.StringType),
         th.Property("sha", th.StringType),
@@ -1529,6 +1530,7 @@ class PullRequestCommitsStream(GitHubRestStream):
         row = super().post_process(row, context)
         if context is not None and "pull_number" in context:
             row["pull_number"] = context["pull_number"]
+            row["updated_at"] = context["updated_at"]
         return row
 
 
