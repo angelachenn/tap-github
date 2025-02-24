@@ -1176,6 +1176,7 @@ class CommitDiffsStream(GitHubRestStream):
     primary_keys: ClassVar[list[str]] = ["commit_id"]
     parent_stream_type = CommitsStream
     ignore_parent_replication_key = False
+    replication_key = "updated_at"
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
 
     @property
@@ -1224,7 +1225,7 @@ class CommitDiffsStream(GitHubRestStream):
             row["repo"] = context["repo"]
             row["repo_id"] = context["repo_id"]
             row["commit_id"] = context["commit_id"]
-            row["commit_timestamp"] = context["commit_timestamp"]
+            row["updated_at"] = context["commit_timestamp"]
         return row
 
     schema = th.PropertiesList(
