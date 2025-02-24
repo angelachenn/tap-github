@@ -1235,6 +1235,7 @@ class CommitDiffsStream(GitHubRestStream):
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
         th.Property("error_message", th.StringType),
+        th.Property("updated_at", th.DateTimeType),
     ).to_dict()
 
 class LabelsStream(GitHubRestStream):
@@ -1530,8 +1531,8 @@ class PullRequestDiffsStream(GitHubRestStream):
     name = "pull_request_diffs"
     path = "/repos/{org}/{repo}/pulls/{pull_number}"
     primary_keys: ClassVar[list[str]] = ["pull_id"]
-    replication_key = "updated_at"
     parent_stream_type = PullRequestsStream
+    replication_key = "updated_at"
     # The parent pull request object changes if the diff changes.
     ignore_parent_replication_key = False
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
@@ -1598,6 +1599,7 @@ class PullRequestDiffsStream(GitHubRestStream):
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
         th.Property("error_message", th.StringType),
+        th.Property("updated_at", th.DateTimeType),
     ).to_dict()
 
 class PullRequestCommitDiffsStream(GitHubRestStream):
@@ -1605,6 +1607,7 @@ class PullRequestCommitDiffsStream(GitHubRestStream):
     path = "/repos/{org}/{repo}/commits/{commit_id}"
     primary_keys: ClassVar[list[str]] = ["commit_id"]
     parent_stream_type = PullRequestCommitsStream
+    replication_key = "updated_at"
     ignore_parent_replication_key = False
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
 
@@ -1668,6 +1671,7 @@ class PullRequestCommitDiffsStream(GitHubRestStream):
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
         th.Property("error_message", th.StringType),
+        th.Property("updated_at", th.DateTimeType),
     ).to_dict()
 
 class ReviewsStream(GitHubRestStream):
