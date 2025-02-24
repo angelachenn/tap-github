@@ -1530,7 +1530,9 @@ class PullRequestDiffsStream(GitHubRestStream):
     name = "pull_request_diffs"
     path = "/repos/{org}/{repo}/pulls/{pull_number}"
     primary_keys: ClassVar[list[str]] = ["pull_id"]
+    replication_key = "updated_at"
     parent_stream_type = PullRequestsStream
+    # The parent pull request object changes if the diff changes.
     ignore_parent_replication_key = False
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
     # Known Github API errors
