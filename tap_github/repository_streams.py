@@ -1085,7 +1085,7 @@ class CommitsStream(GitHubRestStream):
             "repo": context["repo"] if context else None,
             "repo_id": context["repo_id"] if context else None,
             "commit_id": record["sha"],
-            "commit_timestamp": context["commit_timestamp"] if context else None,
+            "updated_at": record["commit_timestamp"]
         }
 
     schema = th.PropertiesList(
@@ -1175,7 +1175,7 @@ class CommitDiffsStream(GitHubRestStream):
     path = "/repos/{org}/{repo}/commits/{commit_id}"
     primary_keys: ClassVar[list[str]] = ["commit_id"]
     parent_stream_type = CommitsStream
-    ignore_parent_replication_key = False
+    ignore_parent_replication_key = True
     replication_key = "updated_at"
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
 
@@ -1225,7 +1225,7 @@ class CommitDiffsStream(GitHubRestStream):
             row["repo"] = context["repo"]
             row["repo_id"] = context["repo_id"]
             row["commit_id"] = context["commit_id"]
-            row["updated_at"] = context["commit_timestamp"]
+            row["updated_at"] = context["updated_at"]
         return row
 
     schema = th.PropertiesList(
@@ -1438,7 +1438,6 @@ class PullRequestCommitsStream(GitHubRestStream):
     name = "pull_request_commits"
     path = "/repos/{org}/{repo}/pulls/{pull_number}/commits"
     ignore_parent_replication_key = False
-    replication_key = "updated_at"
     primary_keys: ClassVar[list[str]] = ["node_id"]
     parent_stream_type = PullRequestsStream
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
@@ -1541,8 +1540,7 @@ class PullRequestDiffsStream(GitHubRestStream):
     primary_keys: ClassVar[list[str]] = ["pull_id"]
     parent_stream_type = PullRequestsStream
     replication_key = "updated_at"
-    # The parent pull request object changes if the diff changes.
-    ignore_parent_replication_key = False
+    ignore_parent_replication_key = True
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
     # Known Github API errors
     tolerated_http_errors: ClassVar[list[int]] = [404, 406, 422, 502]
@@ -1617,7 +1615,7 @@ class PullRequestCommitDiffsStream(GitHubRestStream):
     primary_keys: ClassVar[list[str]] = ["commit_id"]
     parent_stream_type = PullRequestCommitsStream
     replication_key = "updated_at"
-    ignore_parent_replication_key = False
+    ignore_parent_replication_key = True
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
 
     @property
