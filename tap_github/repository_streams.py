@@ -1249,6 +1249,7 @@ class PullRequestsStream(GitHubRestStream):
                 "repo_id": context["repo_id"],
                 "pull_number": record["number"],
                 "pull_id": record["id"],
+                "updated_at": record["updated_at"],
             }
         return {
             "pull_number": record["number"],
@@ -1447,7 +1448,8 @@ class PullRequestDiffsStream(GitHubRestStream):
     path = "/repos/{org}/{repo}/pulls/{pull_number}"
     primary_keys: ClassVar[list[str]] = ["pull_id"]
     parent_stream_type = PullRequestsStream
-    ignore_parent_replication_key = False
+    ignore_parent_replication_key = True
+    replication_key = "updated_at"
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
     # Known Github API errors
     tolerated_http_errors: ClassVar[list[int]] = [404, 406, 422, 502]
@@ -1499,6 +1501,7 @@ class PullRequestDiffsStream(GitHubRestStream):
             row["repo_id"] = context["repo_id"]
             row["pull_number"] = context["pull_number"]
             row["pull_id"] = context["pull_id"]
+            row["updated_at"] = context["updated_at"]
         return row
 
     schema = th.PropertiesList(
@@ -1508,6 +1511,7 @@ class PullRequestDiffsStream(GitHubRestStream):
         th.Property("repo_id", th.IntegerType),
         th.Property("pull_number", th.IntegerType),
         th.Property("pull_id", th.IntegerType),
+        th.Property("updated_at", th.DateTimeType),
         # Rest
         th.Property("diff", th.StringType),
         th.Property("success", th.BooleanType),
