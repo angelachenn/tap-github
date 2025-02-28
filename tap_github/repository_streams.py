@@ -1448,11 +1448,12 @@ class PullRequestDiffsStream(GitHubRestStream):
     path = "/repos/{org}/{repo}/pulls/{pull_number}"
     primary_keys: ClassVar[list[str]] = ["pull_id"]
     parent_stream_type = PullRequestsStream
-    ignore_parent_replication_key = True
+    ignore_parent_replication_key = False
     replication_key = "updated_at"
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
     # Known Github API errors
     tolerated_http_errors: ClassVar[list[int]] = [404, 406, 422, 502]
+    use_fake_since_parameter = True
 
     @property
     def http_headers(self) -> dict:
