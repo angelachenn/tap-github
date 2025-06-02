@@ -6,7 +6,6 @@ import email.utils
 import inspect
 import random
 import time
-from types import FrameType
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 from urllib.parse import parse_qs, urlparse
 
@@ -20,9 +19,11 @@ from tap_github.authenticator import GitHubTokenAuthenticator
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from types import FrameType
 
     import requests
     from backoff.types import Details
+    from singer_sdk.helpers.types import Context
 
 EMPTY_REPO_ERROR_STATUS = 409
 
@@ -61,7 +62,7 @@ class GitHubRestStream(RESTStream):
     def http_headers(self) -> dict[str, str]:
         """Return the http headers needed."""
         headers = {"Accept": "application/vnd.github.v3+json"}
-        headers["User-Agent"] = cast(str, self.config.get("user_agent", "tap-github"))
+        headers["User-Agent"] = cast("str", self.config.get("user_agent", "tap-github"))
         return headers
 
     def get_next_page_token(
@@ -74,7 +75,8 @@ class GitHubRestStream(RESTStream):
             previous_token
             and self.MAX_RESULTS_LIMIT
             and (
-                cast(int, previous_token) * self.MAX_PER_PAGE >= self.MAX_RESULTS_LIMIT
+                cast("int", previous_token) * self.MAX_PER_PAGE
+                >= self.MAX_RESULTS_LIMIT
             )
         ):
             return None
@@ -139,7 +141,7 @@ class GitHubRestStream(RESTStream):
 
     def get_url_params(
         self,
-        context: dict | None,
+        context: Context | None,
         next_page_token: Any | None,  # noqa: ANN401
     ) -> dict[str, Any]:
         """Return a dictionary of values to be used in URL parameterization."""
@@ -172,7 +174,7 @@ class GitHubRestStream(RESTStream):
             params[since_key] = since.isoformat(sep="T")
             # Leverage conditional requests to save API quotas
             # https://github.community/t/how-does-if-modified-since-work/139627
-            self._http_headers["If-modified-since"] = email.utils.format_datetime(since)
+            self.http_headers["If-modified-since"] = email.utils.format_datetime(since)
         return params
 
     def validate_response(self, response: requests.Response) -> None:
@@ -270,7 +272,7 @@ class GitHubRestStream(RESTStream):
 
         yield from results
 
-    def post_process(self, row: dict, context: dict[str, str] | None = None) -> dict:
+    def post_process(self, row: dict, context: Context | None = None) -> dict:
         """Add `repo_id` by default to all streams."""
         if context is not None and "repo_id" in context:
             row["repo_id"] = context["repo_id"]
@@ -283,8 +285,8 @@ class GitHubRestStream(RESTStream):
         # FIXME: replace this once https://github.com/litl/backoff/issues/158
         # is fixed
         exc = cast(
-            FrameType,
-            cast(FrameType, cast(FrameType, inspect.currentframe()).f_back).f_back,
+            "FrameType",
+            cast("FrameType", cast("FrameType", inspect.currentframe()).f_back).f_back,
         ).f_locals["e"]
         if (
             exc.response is not None
@@ -300,7 +302,7 @@ class GitHubRestStream(RESTStream):
         self,
         request: requests.PreparedRequest,
         response: requests.Response,
-        context: dict | None,
+        context: Context | None,
     ) -> dict[str, int]:
         """Return the cost of the last REST API call."""
         return {"rest": 1, "graphql": 0, "search": 0}
@@ -448,11 +450,11 @@ class GitHubGraphqlStream(GraphQLStream, GitHubRestStream):
 
     def get_url_params(
         self,
-        context: dict | None,
+        context: Context | None,
         next_page_token: Any | None,  # noqa: ANN401
     ) -> dict[str, Any]:
         """Return a dictionary of values to be used in URL parameterization."""
-        params = context.copy() if context else {}
+        params = dict(context) if context else {}
         params["per_page"] = self.MAX_PER_PAGE
         if next_page_token:
             params.update(next_page_token)
@@ -467,7 +469,7 @@ class GitHubGraphqlStream(GraphQLStream, GitHubRestStream):
         self,
         request: requests.PreparedRequest,
         response: requests.Response,
-        context: dict | None,
+        context: Context | None,
     ) -> dict[str, int]:
         """Return the cost of the last graphql API call."""
         costgen = extract_jsonpath("$.data.rateLimit.cost", input=response.json())
