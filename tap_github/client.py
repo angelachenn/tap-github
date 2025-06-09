@@ -151,7 +151,7 @@ class GitHubRestStream(RESTStream):
 
         if self.replication_key == "updated_at":
             params["sort"] = "updated"
-            params["direction"] = "desc" if self.use_fake_since_parameter else "asc"
+            params["direction"] = "asc" # ONLY FOR PULL REQUESTS
 
         # Unfortunately the /starred, /stargazers (starred_at) and /events (created_at) endpoints do not support  # noqa: E501
         # the "since" parameter out of the box. But we use a workaround in 'get_next_page_token'.  # noqa: E501

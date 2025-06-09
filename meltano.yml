@@ -49,12 +49,25 @@ plugins:
     - name: start_date
       kind: date_iso8601
       value: '2010-01-01T00:00:00Z'
+    - name: end_date
+      kind: date_iso8601
+      value: '2010-01-01T00:00:00Z'
     - name: stream_maps
       kind: object
     - name: stream_map_config
       kind: object
     select:
     - '*.*'
+    config:
+      auth_token: $TOKEN
+      repositories:
+        - Shopify/project-centaur
+      start_date: $START_DATE
+      end_date: $END_DATE
+  - name: tap-github-reviews
+    inherit_from: tap-github
+    select:
+      - reviews.*
   loaders:
   - name: target-jsonl
     variant: andyh1203

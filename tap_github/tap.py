@@ -98,6 +98,11 @@ class TapGitHub(Tap):
             th.DateTimeType,
             description="Start date for incremental sync.",
         ),
+        th.Property(
+            "end_date",
+            th.DateTimeType,
+            description="End date for incremental sync.",
+        ),
         th.Property("stream_maps", th.ObjectType()),
         th.Property("stream_map_config", th.ObjectType()),
         th.Property(

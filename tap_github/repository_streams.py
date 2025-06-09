@@ -1242,6 +1242,10 @@ class PullRequestsStream(GitHubRestStream):
     # GitHub is missing the "since" parameter on this endpoint.
     use_fake_since_parameter = True
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.repo_stop_flags: dict[str, bool] = {}  # track which repos have hit end_date
+
     def get_url_params(
         self,
         context: Context | None,
@@ -1264,6 +1268,34 @@ class PullRequestsStream(GitHubRestStream):
         headers = super().http_headers
         headers["Accept"] = "application/vnd.github.squirrel-girl-preview"
         return headers
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        """Parse response and handle start_date/end_date filtering with pagination control."""
+        start_date = self.config.get("start_date")
+        end_date = self.config.get("end_date")
+
+        for record in super().parse_response(response):
+            record_date = record.get(self.replication_key)
+            if record_date:
+                # If we hit end_date, stop pagination for this repo
+                if end_date and record_date > end_date:
+                    repo_key = f"{self.context['org']}/{self.context['repo']}"
+                    self.repo_stop_flags[repo_key] = True
+                    return
+
+                # Skip records before start_date but continue pagination
+                if start_date and record_date < start_date:
+                    continue
+
+            yield record
+
+    def get_next_page_token(self, response: requests.Response, previous_token: Any | None) -> Any | None:
+        """Check flag before continuing pagination."""
+        repo_key = f"{self.context['org']}/{self.context['repo']}"
+        if self.repo_stop_flags.get(repo_key, False):
+            self.logger.info(f"Reached end_date for {repo_key}, stopping pagination")
+            return None
+        return super().get_next_page_token(response, previous_token)
 
     def post_process(self, row: dict, context: Context | None = None) -> dict:
         row = super().post_process(row, context)
@@ -1566,6 +1598,21 @@ class ReviewsStream(GitHubRestStream):
     parent_stream_type = PullRequestsStream
     ignore_parent_replication_key = False
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        """Parse response and filter by start_date/end_date."""
+        start_date = self.config.get("start_date")
+        end_date = self.config.get("end_date")
+
+        for record in super().parse_response(response):
+            record_date = record.get("submitted_at")
+            if record_date:
+                # Filter out records outside the date range
+                if start_date and record_date < start_date:
+                    continue
+                if end_date and record_date > end_date:
+                    continue
+            yield record
 
     schema = th.PropertiesList(
         # Parent keys

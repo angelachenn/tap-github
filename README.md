@@ -44,6 +44,7 @@ This tap accepts the following configuration options:
 - Optional:
   - `user_agent`
   - `start_date`
+  - `end_date`
   - `metrics_log_level`
   - `stream_maps`
   - `stream_maps_config`
