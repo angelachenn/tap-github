@@ -1078,6 +1078,17 @@ class CommitsStream(GitHubRestStream):
     state_partitioning_keys: ClassVar[list[str]] = ["repo", "org"]
     ignore_parent_replication_key = True
 
+    def get_url_params(
+        self,
+        context: Context | None,
+        next_page_token: Any | None,  # noqa: ANN401
+    ) -> dict[str, Any]:
+        """Return a dictionary of values to be used in URL parameterization."""
+        assert context is not None, f"Context cannot be empty for '{self.name}' stream."
+        params = super().get_url_params(context, next_page_token)
+        params["until"] = "2025-07-05"
+        return params
+
     def post_process(self, row: dict, context: Context | None = None) -> dict:
         """
         Add a timestamp top-level field to be used as state replication key.
