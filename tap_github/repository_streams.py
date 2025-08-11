@@ -1086,7 +1086,7 @@ class CommitsStream(GitHubRestStream):
         """Return a dictionary of values to be used in URL parameterization."""
         assert context is not None, f"Context cannot be empty for '{self.name}' stream."
         params = super().get_url_params(context, next_page_token)
-        params["until"] = "2025-07-05"
+        params["until"] = "2024-11-22"
         return params
 
     def post_process(self, row: dict, context: Context | None = None) -> dict:
